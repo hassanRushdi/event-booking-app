@@ -9,7 +9,11 @@ const apiClient = axios.create({
     },
 });
 
-export const getUserByEmail = (email) => apiClient.get(`/users?email=${email}`); // Note: mockAPI filtering
+export const getUserByEmail = async (email) => {
+    const response = await apiClient.get('/users');
+    const matchingUsers = response.data.filter(user => user.email === email);
+    return { data: matchingUsers };
+};
 export const createUser = (userData) => apiClient.post('/users', userData);
 export const getUserById = (userId) => apiClient.get(`/users/${userId}`);
 export const updateUser = (userId, data) => apiClient.put(`/users/${userId}`, data);
