@@ -11,21 +11,20 @@ export const loadUserFromStorage = createAsyncThunk(
             if (storedUserId) {
                 const response = await getUserById(storedUserId);
                 if (response.data) {
-                    return response.data; // Fulfilled with user data
+                    return response.data; 
                 } else {
                     await AsyncStorage.removeItem('userId');
-                    return null; // Fulfilled with null if user fetch failed
+                    return null; 
                 }
             }
-            return null; // Fulfilled with null if no userId in storage
+            return null;
         } catch (e) {
             console.error("Failed to load user from storage", e);
-            return rejectWithValue("Failed to load session."); // Rejected
+            return rejectWithValue("Failed to load session."); 
         }
     }
 );
 
-// Thunk for login
 export const loginUser = createAsyncThunk(
     'auth/loginUser',
     async ({ email, password }, { rejectWithValue }) => {
@@ -35,20 +34,19 @@ export const loginUser = createAsyncThunk(
 
             if (foundUser && foundUser.password === password) {
                 await AsyncStorage.setItem('userId', foundUser.id);
-                return foundUser; // Fulfilled with user data
+                return foundUser; 
             } else {
                  Alert.alert("Login Failed", "Invalid email or password.");
-                return rejectWithValue("Invalid credentials"); // Rejected
+                return rejectWithValue("Invalid credentials"); 
             }
         } catch (error) {
             console.error("Login error:", error);
             Alert.alert("Login Error", "An error occurred during login.");
-            return rejectWithValue(error.message || "Login failed"); // Rejected
+            return rejectWithValue(error.message || "Login failed"); 
         }
     }
 );
 
-// Thunk for signup
 export const signupUser = createAsyncThunk(
     'auth/signupUser',
     async ({ email, password, name }, { rejectWithValue }) => {
@@ -56,23 +54,22 @@ export const signupUser = createAsyncThunk(
             const existingUsers = await getUserByEmail(email);
             if (existingUsers.data.length > 0) {
                 Alert.alert("Signup Failed", "Email already in use.");
-                return rejectWithValue("Email already in use"); // Rejected
+                return rejectWithValue("Email already in use"); 
             }
 
             const newUser = { email, password, name, registeredEvents: [] };
             const response = await createUser(newUser);
             if (response.data) {
                 await AsyncStorage.setItem('userId', response.data.id);
-                return response.data; // Fulfilled with new user data
+                return response.data; 
             } else {
-                 // Should ideally not happen if createUser resolves, but handle defensively
                  Alert.alert("Signup Error", "Failed to create user account.");
                  return rejectWithValue("Failed to create user");
             }
         } catch (error) {
             console.error("Signup error:", error);
             Alert.alert("Signup Error", "An error occurred during signup.");
-            return rejectWithValue(error.message || "Signup failed"); // Rejected
+            return rejectWithValue(error.message || "Signup failed"); 
         }
     }
 );
@@ -83,58 +80,48 @@ export const logoutUser = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             await AsyncStorage.removeItem('userId');
-            return null; // Fulfilled (no specific payload needed, reducer handles state)
+            return null; 
         } catch (e) {
             console.error("Logout failed", e);
-             return rejectWithValue("Logout failed"); // Rejected
+             return rejectWithValue("Logout failed"); 
         }
     }
 );
 
-// Thunk to update user's registered events (e.g., after event registration)
 export const updateUserEvents = createAsyncThunk(
     'auth/updateUserEvents',
     async ({ userId, newRegisteredEventsList }, { rejectWithValue }) => {
         if (!userId) return rejectWithValue("User not logged in");
          try {
-            // We only need to update the user data in the backend.
-            // The user object in Redux state will be updated via the 'fulfilled' action.
-            // We assume the caller already has the *complete* new list.
+           
              const response = await updateUser(userId, { registeredEvents: newRegisteredEventsList });
              if (response.data) {
-                 return response.data; // Return the *full* updated user object
+                 return response.data; 
              } else {
                  throw new Error("Update failed, no data returned");
              }
          } catch (error) {
             console.error("Failed to update user registered events:", error);
-             // Optional: Alert user here or handle in component based on rejected state
             return rejectWithValue(error.message || "Failed to update events"); // Rejected
          }
     }
 );
 
 
-// --- Slice Definition ---
-
 const initialState = {
-    user: null, // Store user object { id, email, name, registeredEvents }
-    isLoading: true, // Start true to handle initial load check
-    error: null, // Store potential error messages
+    user: null, 
+    isLoading: true, 
+    error: null, 
 };
 
 const authSlice = createSlice({
     name: 'auth',
     initialState,
     reducers: {
-        // Optional: Reducer to manually clear error if needed
         clearAuthError: (state) => {
             state.error = null;
         },
-        // Potentially add setUser directly if needed outside of thunks, but usually handled by thunks
-        // setUserState: (state, action) => {
-        //   state.user = action.payload;
-        // }
+       
     },
     extraReducers: (builder) => {
         builder
@@ -179,37 +166,30 @@ const authSlice = createSlice({
             })
             .addCase(signupUser.rejected, (state, action) => {
                 state.isLoading = false;
-                state.error = action.payload; // Error message from rejectWithValue
+                state.error = action.payload; 
             })
             // logoutUser
             .addCase(logoutUser.pending, (state) => {
-                state.isLoading = true; // Optional: show loading during logout
+                state.isLoading = true; 
             })
             .addCase(logoutUser.fulfilled, (state) => {
                 state.isLoading = false;
-                state.user = null; // Clear user data
+                state.user = null; 
                 state.error = null;
             })
             .addCase(logoutUser.rejected, (state, action) => {
                 state.isLoading = false;
-                // Keep user logged in? Or force log out? Depends on desired behaviour.
-                // state.user = null; // Force logout state even if async storage fails
                 state.error = action.payload;
                  Alert.alert("Logout Error", "Could not properly log out. Please restart the app if issues persist.");
             })
-             // updateUserEvents
              .addCase(updateUserEvents.pending, (state) => {
-                 // Optionally set a specific loading state for this action
-                 // state.isUpdatingEvents = true;
                  state.error = null;
              })
              .addCase(updateUserEvents.fulfilled, (state, action) => {
-                 state.user = action.payload; // Update user state with the latest data from API
-                 // state.isUpdatingEvents = false;
+                 state.user = action.payload; 
                  state.error = null;
              })
              .addCase(updateUserEvents.rejected, (state, action) => {
-                // state.isUpdatingEvents = false;
                 state.error = action.payload;
                  Alert.alert("Update Failed", `Could not update your registered events: ${action.payload}`);
              });

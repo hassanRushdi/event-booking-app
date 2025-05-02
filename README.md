@@ -1,50 +1,81 @@
-# Welcome to your Expo app 👋
+# Event Booking App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A React Native mobile application built with Expo that allows users to browse, view details, and register for upcoming events. It features user authentication and uses Redux Toolkit for state management.
 
-## Get started
+## Features
 
-1. Install dependencies
+*   **User Authentication:** Secure Login and Signup functionality.
+*   **Event Browsing:** Displays a list of available events with key details (image, title, date, location, price).
+*   **Event Details:** Shows comprehensive information about a selected event, including description, speakers (if any), capacity, and available spots.
+*   **Event Registration:** Allows logged-in users to register for events (if spots are available).
+*   **User Dashboard:** Displays a list of events the logged-in user has registered for.
+*   **State Management:** Uses Redux Toolkit for predictable global state management (auth state, user info).
+*   **API Interaction:** Communicates with a MockAPI backend using Axios.
+*   **Persistence:** Stores user session using AsyncStorage.
+*   **Navigation:** Uses React Navigation for screen transitions.
+*   **User Experience:** Includes loading indicators, pull-to-refresh on lists, and user feedback via alerts.
 
-   ```bash
-   npm install
-   ```
+## Tech Stack
 
-2. Start the app
+*   **Framework:** React Native (with Expo)
+*   **State Management:** Redux Toolkit (`@reduxjs/toolkit`, `react-redux`)
+*   **Navigation:** React Navigation (`@react-navigation/native`, `@react-navigation/stack`)
+*   **API Client:** Axios
+*   **Date Formatting:** `date-fns`
+*   **Local Storage:** `@react-native-async-storage/async-storage`
+*   **Language:** JavaScript
 
-   ```bash
+## Backend
+
+This application uses **MockAPI.io** ([https://mockapi.io/](https://mockapi.io/)) for its backend data simulation.
+
+*   **Base URL:** `https://6811232c3ac96f7119a3b38d.mockapi.io`
+*   **Endpoints Used:** `/users`, `/events`
+
+**No separate backend setup is required to run this application.**
+
+## Getting Started
+
+Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
+
+### Prerequisites
+
+*   **Node.js:** Version 18.x or later recommended. ([Download Node.js](https://nodejs.org/))
+*   **npm:** Version 8.x or later (usually comes with Node.js) or **yarn:** Version 1.x or later.
+*   **Expo Go App:** Install the Expo Go app on your physical Android or iOS device. ([iOS App Store](https://apps.apple.com/us/app/expo-go/id982107779) / [Google Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent))
+    *   *Alternatively*, you can use an Android Emulator or iOS Simulator.
+
+### Setup
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/hassanRushdi/event-booking-app.git
+    ```
+2.  **Navigate to the project directory:**
+    ```bash
+    cd event-booking-app
+    ```
+3.  **Install dependencies:**
+    *   Using npm:
+        ```bash
+        npm install
+        ```
+    *   Or using yarn:
+        ```bash
+        yarn install
+        ```
+
+### Running the App
+
+1.  **Start the Expo development server:**
+    ```bash
     npx expo start
-   ```
+    ```
+    *   This command will start the Metro Bundler and provide you with a QR code and various options in your terminal.
 
-In the output, you'll find options to open the app in a
+2.  **Run on your device or simulator:**
+    *   **On a physical device:** Open the Expo Go app and scan the QR code displayed in the terminal.
+    *   **On an Android Emulator:** Press `a` in the terminal while the emulator is running.
+    *   **On an iOS Simulator:** Press `i` in the terminal while the simulator is running.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+The app should now build and launch on your selected device/simulator. You can start interacting with the event booking application!

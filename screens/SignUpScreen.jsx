@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux'; 
 import { signupUser } from '../store/authSlice'; 
