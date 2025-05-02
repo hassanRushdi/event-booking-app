@@ -1,25 +1,33 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useAuth } from '../contexts/AuthContext';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux'; 
+import { loginUser } from '../store/authSlice'; 
 import Input from '../components/Input';
 import Button from '../components/Button';
 
 const LoginScreen = ({ navigation }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const { login, isLoading } = useAuth();
-    const [isLoggingIn, setIsLoggingIn] = useState(false); // Local loading state
+    const dispatch = useDispatch();
+    const { isLoading, error } = useSelector((state) => state.auth);
 
     const handleLogin = async () => {
         if (!email || !password) {
             Alert.alert("Missing Info", "Please enter both email and password.");
             return;
         }
-        setIsLoggingIn(true);
-        await login(email, password);
-        setIsLoggingIn(false);
-        // Navigation is handled by the AppNavigator based on AuthContext state change
+
+        dispatch(loginUser({ email, password }));
     };
+
+     useEffect(() => {
+         if (error) {
+             Alert.alert("Login Error", error);
+             // Optionally dispatch an action to clear the error state
+             // dispatch(clearAuthError());
+         }
+     }, [error, dispatch]);
+
 
     return (
         <SafeAreaView style={styles.container}>
@@ -31,20 +39,19 @@ const LoginScreen = ({ navigation }) => {
                     onChangeText={setEmail}
                     keyboardType="email-address"
                     autoCapitalize="none"
+                    editable={!isLoading} 
                 />
                 <Input
                     placeholder="Password"
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry
+                    editable={!isLoading} 
                 />
-                 {isLoading || isLoggingIn ? ( // Show activity indicator based on either global or local state
-                    <ActivityIndicator size="large" color="#007AFF" style={styles.loader}/>
-                ) : (
-                    <Button title="Login" onPress={handleLogin} isLoading={isLoggingIn} />
-                )}
+                 <Button title="Login" onPress={handleLogin} isLoading={isLoading} disabled={isLoading} />
 
-                <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
+
+                <TouchableOpacity onPress={() => !isLoading && navigation.navigate('SignUp')} disabled={isLoading}>
                     <Text style={styles.linkText}>Don't have an account? Sign Up</Text>
                 </TouchableOpacity>
             </View>
@@ -52,6 +59,7 @@ const LoginScreen = ({ navigation }) => {
     );
 };
 
+// Styles remain the same
 const styles = StyleSheet.create({
     container: {
         flex: 1,

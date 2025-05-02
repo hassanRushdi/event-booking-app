@@ -1,62 +1,66 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, SafeAreaView, RefreshControl } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, SafeAreaView, RefreshControl, Alert } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { getEvents } from '../api/mockAPI'; // We fetch ALL events and filter
-import { useAuth } from '../contexts/AuthContext';
+import { getEvents } from '../api/mockAPI';
+import { useSelector } from 'react-redux';
 import EventCard from '../components/EventCard';
 
 const DashboardScreen = () => {
     const navigation = useNavigation();
-    const { user } = useAuth();
+    const { user } = useSelector((state) => state.auth);
     const [registeredEvents, setRegisteredEvents] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false); // Manage local loading for event fetching
     const [isRefreshing, setIsRefreshing] = useState(false);
 
-    const fetchRegisteredEvents = async () => {
+    const fetchRegisteredEvents = useCallback(async () => {
+        if (!isRefreshing && user) setIsLoading(true);
+
         if (!user || !user.registeredEvents || user.registeredEvents.length === 0) {
-             setRegisteredEvents([]);
-             setIsLoading(false);
-             setIsRefreshing(false);
+            setRegisteredEvents([]);
+            setIsLoading(false);
+            setIsRefreshing(false);
             return;
         }
 
         try {
-            // Fetch all events
             const response = await getEvents();
             const allEvents = response.data;
-
-            // Filter events based on user's registeredEvents array
             const userEventIds = user.registeredEvents;
             const filteredEvents = allEvents.filter(event => userEventIds.includes(event.id));
             setRegisteredEvents(filteredEvents);
-
         } catch (error) {
             console.error("Failed to fetch registered events:", error);
-             Alert.alert("Error", "Could not load your registered events.");
+            Alert.alert("Error", "Could not load your registered events.");
+             setRegisteredEvents([]); // Clear events on error
         } finally {
             setIsLoading(false);
             setIsRefreshing(false);
         }
-    };
+    }, [user, isRefreshing]); 
 
-    // Fetch when the screen mounts or user data changes
+
     useEffect(() => {
-        setIsLoading(true);
         fetchRegisteredEvents();
-    }, [user]); // Dependency on user ensures refetch if user logs in/out or data changes
+    }, [user?.id, user?.registeredEvents?.length, fetchRegisteredEvents]); 
 
-    // Refetch when the screen comes into focus
      useFocusEffect(
         useCallback(() => {
-             // Avoid setting isLoading true here on every focus, let RefreshControl handle it
             fetchRegisteredEvents();
-        }, [user]) // Re-run if user context changes while screen is focused
+        }, [fetchRegisteredEvents]) 
      );
 
     const onRefresh = useCallback(() => {
         setIsRefreshing(true);
-        fetchRegisteredEvents();
-    }, [user]);
+    }, []);
+
+
+    if (!user && !isLoading) {
+         return (
+            <SafeAreaView style={styles.centered}>
+                <Text style={styles.noEventsText}>Please log in to see your dashboard.</Text>
+            </SafeAreaView>
+        );
+    }
 
     if (isLoading && !isRefreshing) {
         return (
@@ -72,6 +76,9 @@ const DashboardScreen = () => {
             {registeredEvents.length === 0 ? (
                 <View style={styles.centered}>
                     <Text style={styles.noEventsText}>You haven't registered for any events yet.</Text>
+                     <TouchableOpacity onPress={onRefresh} style={{marginTop: 15}}>
+                        <Text style={styles.headerButtonText}>Tap to Refresh</Text>
+                     </TouchableOpacity>
                 </View>
             ) : (
                 <FlatList
@@ -120,6 +127,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         paddingBottom: 15,
     },
+     headerButtonText: { 
+         color: '#007AFF',
+         fontSize: 16,
+     },
 });
 
 export default DashboardScreen;

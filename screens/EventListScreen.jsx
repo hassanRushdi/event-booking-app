@@ -1,25 +1,27 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, SafeAreaView, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, SafeAreaView, RefreshControl, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { getEvents } from '@/api/mockAPI';
 import EventCard from '@/components/EventCard';
-import Button from '@/components/Button'; // Import Button for logout
-import { useAuth } from '@/contexts/AuthContext';
+import { useDispatch, useSelector } from 'react-redux'; 
+import { logoutUser } from '@/store/authSlice'; 
 
 const EventListScreen = () => {
     const navigation = useNavigation();
-    const { logout } = useAuth(); // Get logout function
+    const dispatch = useDispatch();
+    const { isLoading: isAuthLoading } = useSelector((state) => state.auth);
     const [events, setEvents] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(true); 
     const [isRefreshing, setIsRefreshing] = useState(false);
 
     const fetchEvents = async () => {
+        if (!isRefreshing) setIsLoading(true);
         try {
             const response = await getEvents();
             setEvents(response.data);
         } catch (error) {
             console.error("Failed to fetch events:", error);
-            // Handle error display
+            Alert.alert("Error", "Could not load events.");
         } finally {
             setIsLoading(false);
             setIsRefreshing(false);
@@ -27,44 +29,38 @@ const EventListScreen = () => {
     };
 
     useEffect(() => {
-        setIsLoading(true);
         fetchEvents();
     }, []);
 
-    // Refetch events when the screen comes into focus (e.g., after registration)
      useFocusEffect(
         useCallback(() => {
-             // Don't set loading true here unless it's the initial load or refresh
              fetchEvents();
         }, [])
      );
-
 
     const onRefresh = useCallback(() => {
         setIsRefreshing(true);
         fetchEvents();
     }, []);
 
-    const handleLogout = async () => {
-        await logout();
-        // Navigation is handled by AppNavigator
-    }
+    const handleLogout = useCallback(async () => {
+        dispatch(logoutUser());
+    }, [dispatch]);
 
-     // Add Logout and Dashboard buttons to header
     useEffect(() => {
         navigation.setOptions({
             headerRight: () => (
                 <View style={styles.headerButtons}>
-                    <TouchableOpacity onPress={() => navigation.navigate('Dashboard')} style={styles.headerButton}>
+                    <TouchableOpacity onPress={() => navigation.navigate('Dashboard')} style={styles.headerButton} disabled={isAuthLoading}>
                          <Text style={styles.headerButtonText}>Dashboard</Text>
                      </TouchableOpacity>
-                    <TouchableOpacity onPress={handleLogout} style={styles.headerButton}>
-                         <Text style={styles.headerButtonText}>Logout</Text>
+                    <TouchableOpacity onPress={handleLogout} style={styles.headerButton} disabled={isAuthLoading}>
+                         <Text style={[styles.headerButtonText, isAuthLoading && styles.disabledText]}>{isAuthLoading ? 'Logging out...' : 'Logout'}</Text>
                      </TouchableOpacity>
                 </View>
             ),
         });
-    }, [navigation, handleLogout]);
+    }, [navigation, handleLogout, isAuthLoading]); 
 
     if (isLoading && !isRefreshing) {
         return (
@@ -79,6 +75,9 @@ const EventListScreen = () => {
             {events.length === 0 && !isLoading ? (
                 <View style={styles.centered}>
                      <Text style={styles.noEventsText}>No events found.</Text>
+                     <TouchableOpacity onPress={onRefresh} style={{marginTop: 15}}>
+                        <Text style={styles.headerButtonText}>Tap to Refresh</Text>
+                     </TouchableOpacity>
                 </View>
             ) : (
                 <FlatList
@@ -109,10 +108,12 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        padding: 20, 
     },
      noEventsText: {
         fontSize: 16,
         color: '#666',
+        textAlign: 'center', 
     },
     list: {
         padding: 15,
@@ -123,12 +124,15 @@ const styles = StyleSheet.create({
      },
      headerButton: {
          marginLeft: 15,
-         paddingVertical: 5, // Add padding for easier tapping
+         paddingVertical: 5,
      },
       headerButtonText: {
-         color: '#007AFF', // Or your app's primary color
+         color: '#007AFF',
          fontSize: 16,
      },
+      disabledText: { 
+         color: '#a0a0a0',
+      }
 });
 
 export default EventListScreen;

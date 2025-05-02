@@ -1,14 +1,14 @@
 import React from "react";
 import { StatusBar } from "expo-status-bar";
-import { AuthProvider } from "../contexts/AuthContext";
-import AppNavigator from "@/navigation/AppNavigator.jsx";
-
+import AppNavigator from "@/navigation/AppNavigator";
+import { Provider } from 'react-redux';
+import { store } from '../store/store'; 
 
 export default function RootLayout() {
   return (
-      <AuthProvider>
+      <Provider store={store}>
         <AppNavigator />
         <StatusBar style="auto" />
-      </AuthProvider>
+      </Provider>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { useAuth } from '../contexts/AuthContext';
+import { useDispatch, useSelector } from 'react-redux'; 
+import { signupUser } from '../store/authSlice'; 
 import Input from '../components/Input';
 import Button from '../components/Button';
 
@@ -9,8 +10,8 @@ const SignUpScreen = ({ navigation }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const { signup, isLoading } = useAuth();
-     const [isSigningUp, setIsSigningUp] = useState(false);
+    const dispatch = useDispatch();
+    const { isLoading, error } = useSelector((state) => state.auth);
 
     const handleSignUp = async () => {
         if (!name || !email || !password || !confirmPassword) {
@@ -21,18 +22,19 @@ const SignUpScreen = ({ navigation }) => {
             Alert.alert("Password Mismatch", "Passwords do not match.");
             return;
         }
-         // Basic email validation
          const emailRegex = /\S+@\S+\.\S+/;
          if (!emailRegex.test(email)) {
              Alert.alert("Invalid Email", "Please enter a valid email address.");
              return;
          }
-
-         setIsSigningUp(true);
-        await signup(email, password, name);
-         setIsSigningUp(false);
-         // Navigation handled by AppNavigator
+        dispatch(signupUser({ email, password, name }));
     };
+
+    useEffect(() => {
+        if (error) {
+            Alert.alert("Signup Error", error);
+        }
+    }, [error, dispatch]);
 
     return (
         <SafeAreaView style={styles.container}>
@@ -42,6 +44,7 @@ const SignUpScreen = ({ navigation }) => {
                     placeholder="Name"
                     value={name}
                     onChangeText={setName}
+                     editable={!isLoading}
                 />
                 <Input
                     placeholder="Email"
@@ -49,26 +52,25 @@ const SignUpScreen = ({ navigation }) => {
                     onChangeText={setEmail}
                     keyboardType="email-address"
                     autoCapitalize="none"
+                     editable={!isLoading}
                 />
                 <Input
                     placeholder="Password"
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry
+                     editable={!isLoading}
                 />
                 <Input
                     placeholder="Confirm Password"
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
                     secureTextEntry
+                     editable={!isLoading}
                 />
-                 {isLoading || isSigningUp ? (
-                    <ActivityIndicator size="large" color="#007AFF" style={styles.loader}/>
-                ) : (
-                     <Button title="Sign Up" onPress={handleSignUp} isLoading={isSigningUp} />
-                )}
+                 <Button title="Sign Up" onPress={handleSignUp} isLoading={isLoading} disabled={isLoading} />
 
-                <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                <TouchableOpacity onPress={() => !isLoading && navigation.navigate('Login')} disabled={isLoading}>
                     <Text style={styles.linkText}>Already have an account? Login</Text>
                 </TouchableOpacity>
             </View>
@@ -92,7 +94,7 @@ const styles = StyleSheet.create({
         marginBottom: 30,
         color: '#333',
     },
-      loader: {
+      loader: { 
         marginVertical: 20,
     },
     linkText: {
